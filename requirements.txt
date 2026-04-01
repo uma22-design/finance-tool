@@ -1,0 +1,6 @@
+streamlit
+pandas
+yfinance
+plotly
+PyPDF2
+google-genai
