@@ -44,7 +44,7 @@ with tab2:
                 prompt = f"You are a CMA analyst. From this annual report extract: 1) Key costs 2) Revenue trends 3) Profit margins 4) 3 strategic recommendations:\n\n{text[:6000]}"
                 with st.spinner("Analyzing report..."):
                     response = client.chat.completions.create(
-                        model="llama3-8b-8192",
+                        model="llama-3.3-70b-versatile",
                         messages=[{"role": "user", "content": prompt}]
                     )
                 st.success(response.choices[0].message.content)
