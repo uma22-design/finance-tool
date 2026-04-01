@@ -15,9 +15,7 @@ tab1, tab2, tab3 = st.tabs(["🏢 Live Company Data", "📄 Annual Report Analys
 with tab3:
     st.subheader("🔍 Find Any Company's Ticker Symbol")
     st.write("Don't know the ticker? Search by company name!")
-
     search_name = st.text_input("Type company name (e.g. Reliance, Infosys, Apple, Ford Motors)")
-
     if search_name:
         try:
             url = f"https://query1.finance.yahoo.com/v1/finance/search?q={search_name}&quotesCount=10&newsCount=0&enableFuzzyQuery=true"
@@ -25,14 +23,13 @@ with tab3:
             response = requests.get(url, headers=headers, timeout=5)
             data = response.json()
             quotes = [q for q in data.get("quotes", []) if q.get("symbol")]
-
             if quotes:
                 st.success(f"✅ Found {len(quotes)} results:")
                 for q in quotes:
                     name = q.get("shortname") or q.get("longname") or q.get("symbol")
                     symbol = q.get("symbol")
                     exchange = q.get("exchange", "")
-                    st.code(f"{name} ({exchange}) → {symbol}")
+                    st.code(f"{name} ({exchange}) --> {symbol}")
             else:
                 st.warning("No results found. Try a different spelling.")
         except Exception as e:
@@ -40,9 +37,7 @@ with tab3:
 
     st.divider()
     st.subheader("📋 Complete Ticker Reference Table")
-
     col1, col2 = st.columns(2)
-
     with col1:
         st.markdown("**🇮🇳 Top Indian Companies (NSE)**")
         st.markdown("""
@@ -64,7 +59,6 @@ with tab3:
 | Tech Mahindra | TECHM.NS |
 | Tata Motors | TATAMOTORS.NS |
         """)
-
     with col2:
         st.markdown("**🌍 Top Global Companies**")
         st.markdown("""
@@ -86,11 +80,10 @@ with tab3:
 | Ford | F |
 | Toyota | TM |
         """)
-
-    st.info("💡 **Tip:** For BSE listed companies add .BO instead of .NS  \nExample: RELIANCE.BO")
+    st.info("💡 Tip: For BSE listed companies add .BO instead of .NS. Example: RELIANCE.BO")
 
 with tab1:
-    st.write("💡 Don't know the ticker? Check the **Find Ticker Symbol** tab!")
+    st.write("💡 Don't know the ticker? Check the Find Ticker Symbol tab!")
     company = st.text_input("Enter Company Ticker Symbol (e.g. TCS.NS, INFY.NS, ACN)")
     if company and st.button("🔍 Fetch Financial Data"):
         try:
@@ -108,7 +101,7 @@ with tab1:
             else:
                 st.warning("No stock history found. Please check the ticker symbol.")
         except Exception as e:
-            st.error(f"Error fetching data. Please check ticker symbol. Try the Find Ticker tab! {e}")
+            st.error(f"Error fetching data. Try the Find Ticker tab! {e}")
 
 with tab2:
     st.write("Upload a company's Annual Report PDF for AI analysis")
@@ -124,14 +117,9 @@ with tab2:
                 client = Groq(api_key=API_KEY)
                 prompt = f"You are a CMA analyst. From this annual report extract: 1) Key costs 2) Revenue trends 3) Profit margins 4) 3 strategic recommendations:\n\n{text[:3000]}"
                 response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",  # or "mixtral-8x7b-32768"
+                    model="llama-3.3-70b-versatile",
                     messages=[{"role": "user", "content": prompt}]
                 )
                 st.success(response.choices[0].message.content)
             except Exception as e:
                 st.error(f"Error: {e}")
-```
-
-**Also update your `requirements.txt`** — replace `google-generativeai` with:
-```
-groq
