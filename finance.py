@@ -42,7 +42,7 @@ with tab2:
             try:
                 client = genai.Client(api_key=API_KEY)
                 prompt = f"You are a CMA analyst. From this annual report extract: 1) Key costs 2) Revenue trends 3) Profit margins 4) 3 strategic recommendations:\n\n{text[:3000]}"
-                response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
                 st.success(response.text)
             except Exception as e:
                 st.error(f"Error: {e}")
