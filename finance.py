@@ -38,16 +38,15 @@ with tab2:
         for page in reader.pages[:10]:
             text += page.extract_text()
         st.success(f"✅ Read {len(reader.pages)} pages successfully!")
-       }")
-if st.button("🤖 Analyze Report"):
-    try:
-        client = Groq(api_key=API_KEY)
-        prompt = f"You are a CMA analyst. From this annual report extract: 1) Key costs 2) Revenue trends 3) Profit margins 4) 3 strategic recommendations:\n\n{text[:6000]}"
-        with st.spinner("Analyzing report..."):
-            response = client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[{"role": "user", "content": prompt}]
-            )
-        st.success(response.choices[0].message.content)
-    except Exception as e:
-        st.error(f"Error: {e}")
+        if st.button("🤖 Analyze Report"):
+            try:
+                client = Groq(api_key=API_KEY)
+                prompt = f"You are a CMA analyst. From this annual report extract: 1) Key costs 2) Revenue trends 3) Profit margins 4) 3 strategic recommendations:\n\n{text[:6000]}"
+                with st.spinner("Analyzing report..."):
+                    response = client.chat.completions.create(
+                        model="llama3-8b-8192",
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                st.success(response.choices[0].message.content)
+            except Exception as e:
+                st.error(f"Error: {e}")
