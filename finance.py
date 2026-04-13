@@ -2,32 +2,11 @@ import streamlit as st
 import yfinance as yf
 import plotly.express as px
 import PyPDF2
-from google import genai
+from groq import Groq
 import requests
 import time
 
-API_KEY = st.secrets["GEMINI_API_KEY"]
-
-# ── yFinance cached fetch with retry ────────────────────────────────────────
-@st.cache_data(ttl=300)  # Cache for 5 minutes
-def fetch_ticker_info(symbol: str):
-    """Fetch ticker info with up to 3 retries on rate limit."""
-    for attempt in range(3):
-        try:
-            ticker = yf.Ticker(symbol)
-            info = ticker.fast_info          # lighter call, less likely to be blocked
-            full_info = ticker.info          # full info
-            hist = ticker.history(period="1y")
-            return full_info, hist, None
-        except Exception as e:
-            err_msg = str(e).lower()
-            if "too many requests" in err_msg or "rate" in err_msg:
-                if attempt < 2:
-                    time.sleep(3 * (attempt + 1))  # wait 3s, then 6s
-                    continue
-            return None, None, str(e)
-    return None, None, "Rate limited by Yahoo Finance. Please try again in a minute."
-# ────────────────────────────────────────────────────────────────────────────
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
 st.title("📊 Company Financial Analyzer")
 st.subheader("Live Data + Annual Report AI Analysis")
@@ -116,12 +95,25 @@ with tab1:
     company = st.text_input("Enter Company Ticker Symbol (e.g. TCS.NS, INFY.NS, ACN)")
 
     if company and st.button("🔍 Fetch Financial Data"):
-        with st.spinner("Fetching data... (retrying if rate limited)"):
-            info, hist, error = fetch_ticker_info(company)
+        with st.spinner("Fetching data... please wait"):
+            info = None
+            hist = None
+            error = None
+            for attempt in range(3):
+                try:
+                    ticker = yf.Ticker(company)
+                    info = ticker.info
+                    hist = ticker.history(period="1y")
+                    break
+                except Exception as e:
+                    if attempt < 2:
+                        time.sleep(3 * (attempt + 1))
+                    else:
+                        error = str(e)
 
         if error:
-            st.error(f"⚠️ {error}")
-            st.info("💡 Tip: Yahoo Finance rate limits free requests. Wait 30–60 seconds and try again, or try a different ticker.")
+            st.error("⚠️ Yahoo Finance rate limited. Wait 30–60 seconds and try again.")
+            st.info("💡 Tip: Try a different ticker or come back in a minute.")
         else:
             st.metric("Company", info.get('longName', company))
             st.metric("Revenue", f"${info.get('totalRevenue', 0):,}")
@@ -146,9 +138,12 @@ with tab2:
         st.success(f"✅ Read {len(reader.pages)} pages successfully!")
         if st.button("🤖 Analyze Report"):
             try:
-                client = genai.Client(api_key=API_KEY)
+                client = Groq(api_key=GROQ_API_KEY)
                 prompt = f"You are a CMA analyst. From this annual report extract: 1) Key costs 2) Revenue trends 3) Profit margins 4) 3 strategic recommendations:\n\n{text[:3000]}"
-                response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
-                st.success(response.text)
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                st.success(response.choices[0].message.content)
             except Exception as e:
                 st.error(f"Error: {e}")
